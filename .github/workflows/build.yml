@@ -1,0 +1,25 @@
+name: Build Horror Trojan
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build Trojan
+      run: |
+        msbuild Trojan/Trojan.csproj /p:Configuration=Release /p:Platform=x64
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: HorrorTrojan
+        path: Trojan/bin/Release/net48/*.exe
