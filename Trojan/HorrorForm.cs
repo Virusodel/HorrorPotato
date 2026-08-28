@@ -216,7 +216,7 @@ namespace HorrorTrojan
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
             TimeSpan elapsed = DateTime.Now - startTime;
-            double percent = (elapsed.TotalSeconds / maxSeconds) * 100;
+            double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
             bloodLevel = 100 - (int)Math.Min(percent, 100);
 
             if (elapsed.TotalSeconds >= maxSeconds)
