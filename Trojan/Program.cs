@@ -31,13 +31,19 @@ namespace HorrorTrojan
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
-                    // === ЗАПУСКАЕМ ОБА КОМПОНЕНТА ===
-                    // 1. Кровь (поверх всего)
+                    // === ПРАВИЛЬНЫЙ ПОРЯДОК ЗАПУСКА ===
+                    // 1. Сначала создаем оба окна
                     BloodEffect blood = new BloodEffect();
+                    MainInterface ui = new MainInterface();
+                    
+                    // 2. Показываем кровь
                     blood.Show();
                     
-                    // 2. Интерфейс (под кровью)
-                    Application.Run(new MainInterface());
+                    // 3. Показываем интерфейс поверх крови
+                    ui.Show();
+                    
+                    // 4. Запускаем главный цикл сообщений
+                    Application.Run();
                     return;
                 }
                 
@@ -69,8 +75,12 @@ namespace HorrorTrojan
                     Application.SetCompatibleTextRenderingDefault(false);
                     
                     BloodEffect blood = new BloodEffect();
+                    MainInterface ui = new MainInterface();
+                    
                     blood.Show();
-                    Application.Run(new MainInterface());
+                    ui.Show();
+                    
+                    Application.Run();
                 }
             }
             finally
