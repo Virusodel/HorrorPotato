@@ -42,8 +42,8 @@ namespace HorrorTrojan
         public static double pictrans = 0.99;
         public static HorrorForm mainForm;
 
-        private Timer effectTimer = new Timer();
-        private Timer topMostEffectTimer = new Timer();
+        private System.Windows.Forms.Timer effectTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer topMostEffectTimer = new System.Windows.Forms.Timer();
 
         private int maxx;
         private int maxy;
