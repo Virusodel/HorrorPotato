@@ -10,8 +10,8 @@ namespace HorrorTrojan
         public static int howmuch = 0;
         public static double pictrans = 0.99;
 
-        private Timer effectTimer = new Timer();
-        private Timer topMostTimer = new Timer();
+        private System.Windows.Forms.Timer effectTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer topMostTimer = new System.Windows.Forms.Timer();
         private Random rnd = new Random();
 
         private int maxx;
