@@ -260,8 +260,15 @@ namespace HorrorTrojan
         
         private void DrawBloodIndicator(Graphics g)
         {
+            if (bloodLevel <= 0) return;
+            
             int fillHeight = (bloodLevel * indicatorHeight) / 100;
+            if (fillHeight <= 0) return;
+            
             int fillY = indicatorY + (indicatorHeight - fillHeight);
+            
+            int height = Math.Max(1, fillHeight - 2);
+            int width = Math.Max(1, indicatorWidth - 2);
             
             Rectangle borderRect = new Rectangle(indicatorX, indicatorY, indicatorWidth, indicatorHeight);
             using (Pen borderPen = new Pen(Color.FromArgb(120, 100, 0, 0), 1))
@@ -269,7 +276,13 @@ namespace HorrorTrojan
                 g.DrawRectangle(borderPen, borderRect);
             }
             
-            Rectangle fillRect = new Rectangle(indicatorX + 1, fillY + 1, indicatorWidth - 2, fillHeight - 2);
+            Rectangle fillRect = new Rectangle(
+                indicatorX + 1,
+                fillY + 1,
+                width,
+                height
+            );
+            
             using (LinearGradientBrush brush = new LinearGradientBrush(
                 fillRect,
                 Color.FromArgb(255, 200, 0, 0),
