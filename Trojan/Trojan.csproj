@@ -14,6 +14,7 @@
     <EmbeddedResource Include="..\Resources\eye.ani" LogicalName="eye.ani" />
     <EmbeddedResource Include="..\Resources\horror.png" LogicalName="horror.png" />
     <EmbeddedResource Include="..\Resources\mbr.bin" LogicalName="mbr.bin" />
+    <EmbeddedResource Include="..\Resources\hr.wav" LogicalName="hr.wav" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
