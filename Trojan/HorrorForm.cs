@@ -306,14 +306,17 @@ namespace HorrorTrojan
             using (SolidBrush b = new SolidBrush(Color.FromArgb(rnd.Next(100, 255), Color.Red)))
             {
                 int size = rnd.Next(3, 15);
-                int pos = rnd.Next(0, 11) switch
-                {
-                    < 5 => rnd.Next(-5, 65),
-                    > 4 and < 8 => rnd.Next(65, 120),
-                    8 or 9 => rnd.Next(120, 250),
-                    10 => rnd.Next(250, 500),
-                    _ => 0
-                };
+                int pos = 0;
+                int posType = rnd.Next(0, 11);
+                
+                if (posType < 5)
+                    pos = rnd.Next(-5, 65);
+                else if (posType > 4 && posType < 8)
+                    pos = rnd.Next(65, 120);
+                else if (posType == 8 || posType == 9)
+                    pos = rnd.Next(120, 250);
+                else if (posType == 10)
+                    pos = rnd.Next(250, 500);
 
                 Rectangle rect = new Rectangle(maxx - pos, rnd.Next(0, maxy - 50), size, rnd.Next(3, 15));
 
@@ -330,14 +333,17 @@ namespace HorrorTrojan
             using (SolidBrush b = new SolidBrush(Color.FromArgb(rnd.Next(100, 255), Color.Red)))
             {
                 int size = rnd.Next(3, 15);
-                int pos = rnd.Next(0, 11) switch
-                {
-                    < 5 => rnd.Next(-5, 65),
-                    > 4 and < 8 => rnd.Next(65, 120),
-                    8 or 9 => rnd.Next(120, 250),
-                    10 => rnd.Next(250, 500),
-                    _ => 0
-                };
+                int pos = 0;
+                int posType = rnd.Next(0, 11);
+                
+                if (posType < 5)
+                    pos = rnd.Next(-5, 65);
+                else if (posType > 4 && posType < 8)
+                    pos = rnd.Next(65, 120);
+                else if (posType == 8 || posType == 9)
+                    pos = rnd.Next(120, 250);
+                else if (posType == 10)
+                    pos = rnd.Next(250, 500);
 
                 Rectangle rect = new Rectangle(pos, rnd.Next(0, maxy - 50), size, rnd.Next(3, 15));
 
@@ -354,14 +360,17 @@ namespace HorrorTrojan
             using (SolidBrush b = new SolidBrush(Color.FromArgb(rnd.Next(100, 255), Color.Red)))
             {
                 int size = rnd.Next(3, 15);
-                int pos = rnd.Next(0, 11) switch
-                {
-                    < 5 => rnd.Next(-5, 20),
-                    > 4 and < 8 => rnd.Next(20, 40),
-                    8 or 9 => rnd.Next(40, 60),
-                    10 => rnd.Next(60, 100),
-                    _ => 0
-                };
+                int pos = 0;
+                int posType = rnd.Next(0, 11);
+                
+                if (posType < 5)
+                    pos = rnd.Next(-5, 20);
+                else if (posType > 4 && posType < 8)
+                    pos = rnd.Next(20, 40);
+                else if (posType == 8 || posType == 9)
+                    pos = rnd.Next(40, 60);
+                else if (posType == 10)
+                    pos = rnd.Next(60, 100);
 
                 Rectangle rect = new Rectangle(rnd.Next(20, maxx - 20), pos, size, rnd.Next(3, 15));
 
@@ -378,14 +387,17 @@ namespace HorrorTrojan
             using (SolidBrush b = new SolidBrush(Color.FromArgb(rnd.Next(100, 255), Color.Red)))
             {
                 int size = rnd.Next(3, 15);
-                int pos = rnd.Next(0, 11) switch
-                {
-                    < 5 => rnd.Next(-5, 20),
-                    > 4 and < 8 => rnd.Next(20, 40),
-                    8 or 9 => rnd.Next(40, 60),
-                    10 => rnd.Next(60, 100),
-                    _ => 0
-                };
+                int pos = 0;
+                int posType = rnd.Next(0, 11);
+                
+                if (posType < 5)
+                    pos = rnd.Next(-5, 20);
+                else if (posType > 4 && posType < 8)
+                    pos = rnd.Next(20, 40);
+                else if (posType == 8 || posType == 9)
+                    pos = rnd.Next(40, 60);
+                else if (posType == 10)
+                    pos = rnd.Next(60, 100);
 
                 Rectangle rect = new Rectangle(rnd.Next(20, maxx - 20), maxy - pos, size, rnd.Next(3, 15));
 
