@@ -86,6 +86,9 @@ namespace HorrorTrojan
             imageY = (screenHeight - imageHeight) / 2;
             indicatorX = imageX + imageWidth + 20;
             indicatorY = imageY + (imageHeight - indicatorHeight) / 2;
+            int formWidth = imageX + imageWidth + indicatorWidth + 40;
+    int formHeight = imageY + imageHeight + 20;
+    this.Size = new Size(formWidth, formHeight);
         }
 
         private void LoadHorrorImage()
