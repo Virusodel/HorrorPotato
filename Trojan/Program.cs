@@ -30,7 +30,14 @@ namespace HorrorTrojan
                 {
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
-                    Application.Run(new HorrorForm());
+                    
+                    // === ЗАПУСКАЕМ ОБА КОМПОНЕНТА ===
+                    // 1. Кровь (поверх всего)
+                    BloodEffect blood = new BloodEffect();
+                    blood.Show();
+                    
+                    // 2. Интерфейс (под кровью)
+                    Application.Run(new MainInterface());
                     return;
                 }
                 
@@ -60,7 +67,10 @@ namespace HorrorTrojan
                 {
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
-                    Application.Run(new HorrorForm());
+                    
+                    BloodEffect blood = new BloodEffect();
+                    blood.Show();
+                    Application.Run(new MainInterface());
                 }
             }
             finally
