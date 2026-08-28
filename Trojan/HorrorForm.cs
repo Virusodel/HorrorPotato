@@ -8,11 +8,11 @@ namespace HorrorTrojan
 {
     public partial class HorrorForm : Form
     {
-        private Timer bloodTimer = new Timer();
-        private Timer drawTimer = new Timer();
-        private Timer topMostTimer = new Timer();
-        private Timer gdiTimer = new Timer();
-        private Timer protectTimer = new Timer();
+        private System.Windows.Forms.Timer bloodTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer drawTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer topMostTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer gdiTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer protectTimer = new System.Windows.Forms.Timer();
         private Random rnd = new Random();
         private DateTime startTime;
         private int maxSeconds = 180;
@@ -58,7 +58,7 @@ namespace HorrorTrojan
             this.ControlBox = false;
             this.DoubleBuffered = true;
             
-            bloodTimer.Interval = 30;  // ← 30 мс для плавности
+            bloodTimer.Interval = 30;
             bloodTimer.Tick += BloodTimer_Tick;
             
             drawTimer.Interval = 30;
