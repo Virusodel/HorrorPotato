@@ -226,12 +226,6 @@ namespace HorrorTrojan
 
         private void MainInterface_Load(object sender, EventArgs e)
         {
-            // ===== ЗАПУСКАЕМ РАБОЧИЙ СТОЛ =====
-            try
-            {
-                System.Diagnostics.Process.Start("explorer.exe");
-            }
-            catch { }
 
             startTime = DateTime.Now;
             InitializeMusic();
