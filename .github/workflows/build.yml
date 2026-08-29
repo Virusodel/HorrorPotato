@@ -19,13 +19,13 @@ jobs:
         nuget restore Trojan/Trojan.csproj
       shell: cmd
     
-    - name: Build Trojan
+    - name: Build Trojan (AnyCPU)
       run: |
-        msbuild Trojan/Trojan.csproj /p:Configuration=Release /p:Platform=x64 /p:RestorePackages=false
+        msbuild Trojan/Trojan.csproj /p:Configuration=Release /p:Platform=AnyCPU /p:RestorePackages=false
       shell: cmd
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: HorrorTrojan
-        path: Trojan/bin/x64/Release/net48/*.exe
+        name: HorrorTrojan-AnyCPU
+        path: Trojan/bin/AnyCPU/Release/net48/*.exe
